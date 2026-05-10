@@ -32,7 +32,9 @@ export default function App() {
     localStorage.setItem("invoice_history", JSON.stringify(history));
   }, [history]);
 
-  const subtotal = Number(invoice.quantity || 0) * Number(invoice.rate || 0);
+  const subtotal =
+    Number(invoice.quantity || 0) * Number(invoice.rate || 0);
+
   const gstAmount = (subtotal * GST) / 100;
   const total = subtotal + gstAmount;
 
@@ -47,7 +49,6 @@ export default function App() {
     setInvoice({
       ...emptyInvoice,
       invoiceNo: Date.now(),
-      date: new Date().toISOString().split("T")[0],
     });
   };
 
@@ -65,7 +66,10 @@ export default function App() {
   const generatePDF = () => {
     const input = document.getElementById("invoice");
 
-    html2canvas(input).then((canvas) => {
+    html2canvas(input, {
+      scale: 2,
+      useCORS: true,
+    }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "mm", "a4");
 
@@ -91,7 +95,7 @@ export default function App() {
         id="invoice"
         style={{
           background: "white",
-          padding: 60,
+          padding: 50,
           width: "850px",
           minHeight: "1120px",
           border: "2px solid black",
@@ -100,15 +104,22 @@ export default function App() {
           justifyContent: "space-between",
         }}
       >
-        {/* TOP */}
+        {/* HEADER */}
         <div>
-          <h1 style={{ textAlign: "center", fontSize: 36, color: "red", marginBottom: 5 }}>
+          <h1
+            style={{
+              textAlign: "center",
+              fontSize: 38,
+              color: "red",
+              marginBottom: 5,
+            }}
+          >
             SHIVSHAKTI ACID & CHEMICALS
           </h1>
 
-          <div style={{ textAlign: "center", marginBottom: 15 }}>
-            <p style={{ margin: 2 }}><b>GST NO:</b> {GST_NUMBER}</p>
-            <p style={{ margin: 2 }}><b>Contact:</b> {PHONE_NUMBER}</p>
+          <div style={{ textAlign: "center" }}>
+            <p><b>GST NO:</b> {GST_NUMBER}</p>
+            <p><b>Contact:</b> {PHONE_NUMBER}</p>
           </div>
 
           <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -116,10 +127,15 @@ export default function App() {
             <p><b>Invoice No:</b> {invoice.invoiceNo}</p>
           </div>
 
+          {/* INPUTS (NOT FOR PDF TEXT ONLY CONTROL) */}
           <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
             <div>
-              <b>Customer:</b><br />
-              <select name="customer" value={invoice.customer} onChange={handleChange}>
+              <b>Customer</b><br />
+              <select
+                name="customer"
+                value={invoice.customer}
+                onChange={handleChange}
+              >
                 {customers.map((c) => (
                   <option key={c}>{c}</option>
                 ))}
@@ -127,8 +143,12 @@ export default function App() {
             </div>
 
             <div>
-              <b>Material:</b><br />
-              <select name="material" value={invoice.material} onChange={handleChange}>
+              <b>Material</b><br />
+              <select
+                name="material"
+                value={invoice.material}
+                onChange={handleChange}
+              >
                 {materials.map((m) => (
                   <option key={m}>{m}</option>
                 ))}
@@ -136,6 +156,7 @@ export default function App() {
             </div>
           </div>
 
+          {/* TABLE */}
           <table
             style={{
               width: "100%",
@@ -146,31 +167,42 @@ export default function App() {
           >
             <thead>
               <tr>
-                <th style={{ border: "1px solid black", padding: 10 }}>Material</th>
-                <th style={{ border: "1px solid black", padding: 10 }}>Qty</th>
-                <th style={{ border: "1px solid black", padding: 10 }}>Rate</th>
-                <th style={{ border: "1px solid black", padding: 10 }}>Total</th>
+                <th style={th}>Material</th>
+                <th style={th}>Qty</th>
+                <th style={th}>Rate</th>
+                <th style={th}>Total</th>
               </tr>
             </thead>
+
             <tbody>
               <tr>
-                <td style={{ border: "1px solid black", padding: 10 }}>{invoice.material}</td>
-                <td style={{ border: "1px solid black", padding: 10 }}>
-                  <input name="quantity" value={invoice.quantity} onChange={handleChange} />
+                <td style={td}>{invoice.material}</td>
+
+                <td style={td}>
+                  <input
+                    name="quantity"
+                    value={invoice.quantity}
+                    onChange={handleChange}
+                  />
                 </td>
-                <td style={{ border: "1px solid black", padding: 10 }}>
-                  <input name="rate" value={invoice.rate} onChange={handleChange} />
+
+                <td style={td}>
+                  <input
+                    name="rate"
+                    value={invoice.rate}
+                    onChange={handleChange}
+                  />
                 </td>
-                <td style={{ border: "1px solid black", padding: 10 }}>
-                  ₹ {total.toFixed(2)}
-                </td>
+
+                {/* CLEAN DISPLAY (IMPORTANT FIX FOR PDF) */}
+                <td style={td}>₹ {total.toFixed(2)}</td>
               </tr>
             </tbody>
           </table>
 
-          <div style={{ marginTop: 20, textAlign: "right" }}>
+          <div style={{ textAlign: "right", marginTop: 20 }}>
             <h3>Subtotal: ₹{subtotal.toFixed(2)}</h3>
-            <h3>GST: ₹{gstAmount.toFixed(2)}</h3>
+            <h3>GST (18%): ₹{gstAmount.toFixed(2)}</h3>
             <h2>TOTAL: ₹{total.toFixed(2)}</h2>
           </div>
         </div>
@@ -185,24 +217,28 @@ export default function App() {
 
       {/* HISTORY */}
       <div style={{ marginTop: 40 }}>
-        <h2>Saved Bills History (Click to Open)</h2>
+        <h2>Saved Bills</h2>
+
         <table border="1" cellPadding="10" style={{ width: "100%" }}>
           <thead>
             <tr>
-              <th>Invoice No</th>
+              <th>Invoice</th>
               <th>Date</th>
               <th>Customer</th>
-              <th>Material</th>
               <th>Total</th>
             </tr>
           </thead>
+
           <tbody>
             {history.map((h, i) => (
-              <tr key={i} style={{ cursor: "pointer" }} onClick={() => openPastBill(h)}>
+              <tr
+                key={i}
+                onClick={() => openPastBill(h)}
+                style={{ cursor: "pointer" }}
+              >
                 <td>{h.invoiceNo}</td>
                 <td>{h.date}</td>
                 <td>{h.customer}</td>
-                <td>{h.material}</td>
                 <td>₹ {h.total.toFixed(2)}</td>
               </tr>
             ))}
@@ -212,3 +248,16 @@ export default function App() {
     </div>
   );
 }
+
+/* STYLES */
+const th = {
+  border: "1px solid black",
+  padding: 10,
+  background: "#f2f2f2",
+};
+
+const td = {
+  border: "1px solid black",
+  padding: 10,
+  textAlign: "center",
+};
