@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 export default function App() {
   const [items, setItems] = useState([
     { name: "", qty: 1, price: 0 },
   ]);
+
+  const printRef = useRef();
 
   const addItem = () => {
     setItems([...items, { name: "", qty: 1, price: 0 }]);
@@ -23,111 +25,115 @@ export default function App() {
   const gst = subtotal * 0.18;
   const total = subtotal + gst;
 
-  // ✅ SIMPLE PRINT (NO PDF BUGS)
-  const generatePDF = () => {
+  const handlePrint = () => {
     window.print();
   };
 
   return (
-    <>
-      {/* PRINT CSS */}
+    <div style={styles.container}>
+      <h1 className="no-print" style={styles.title}>
+        Invoice Generator
+      </h1>
+
+      {/* ================= INPUT SECTION ================= */}
+      <div className="no-print" style={styles.editorBox}>
+        {items.map((item, index) => (
+          <div key={index} style={styles.row}>
+            <input
+              placeholder="Item"
+              value={item.name}
+              onChange={(e) =>
+                updateItem(index, "name", e.target.value)
+              }
+              style={styles.input}
+            />
+
+            <input
+              type="number"
+              value={item.qty}
+              onChange={(e) =>
+                updateItem(index, "qty", Number(e.target.value))
+              }
+              style={styles.inputSmall}
+            />
+
+            <input
+              type="number"
+              value={item.price}
+              onChange={(e) =>
+                updateItem(index, "price", Number(e.target.value))
+              }
+              style={styles.input}
+            />
+          </div>
+        ))}
+
+        <button onClick={addItem} style={styles.button}>
+          + Add Item
+        </button>
+
+        <button onClick={handlePrint} style={styles.printBtn}>
+          Print Invoice
+        </button>
+      </div>
+
+      {/* ================= PRINT AREA (FIXED LAYOUT) ================= */}
+      <div ref={printRef} id="print-area" style={styles.printBox}>
+        <h2>Shiv Shakti Invoice</h2>
+
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {items.map((item, i) => (
+              <tr key={i}>
+                <td>{item.name}</td>
+                <td>{item.qty}</td>
+                <td>₹{item.price}</td>
+                <td>₹{item.qty * item.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div style={styles.summary}>
+          <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
+          <p>GST (18%): ₹{gst.toFixed(2)}</p>
+          <h2>Total: ₹{total.toFixed(2)}</h2>
+        </div>
+      </div>
+
+      {/* ================= PRINT CSS ================= */}
       <style>{`
         @media print {
-          body {
-            background: white !important;
+          body * {
+            visibility: hidden;
+          }
+
+          #print-area, #print-area * {
+            visibility: visible;
+          }
+
+          #print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
           }
 
           .no-print {
             display: none !important;
           }
-
-          #invoice {
-            width: 100% !important;
-            padding: 20px !important;
-            box-shadow: none !important;
-          }
-
-          input {
-            border: none !important;
-            outline: none !important;
-            font-size: 14px;
-          }
         }
       `}</style>
-
-      <div style={styles.container}>
-        <h1 className="no-print" style={styles.title}>
-          Invoice Generator
-        </h1>
-
-        {/* INVOICE */}
-        <div id="invoice" style={styles.invoiceBox}>
-          <h2 style={styles.heading}>Shiv Shakti Invoice</h2>
-
-          {/* HEADER */}
-          <div style={styles.rowHeader}>
-            <div style={styles.cell}>Item</div>
-            <div style={styles.cell}>Qty</div>
-            <div style={styles.cell}>Price</div>
-          </div>
-
-          {/* ITEMS */}
-          {items.map((item, index) => (
-            <div key={index} style={styles.row}>
-              <input
-                placeholder="Item Name"
-                value={item.name}
-                onChange={(e) =>
-                  updateItem(index, "name", e.target.value)
-                }
-                style={styles.input}
-              />
-
-              <input
-                type="number"
-                value={item.qty}
-                onChange={(e) =>
-                  updateItem(index, "qty", Number(e.target.value))
-                }
-                style={styles.inputSmall}
-              />
-
-              <input
-                type="number"
-                value={item.price}
-                onChange={(e) =>
-                  updateItem(index, "price", Number(e.target.value))
-                }
-                style={styles.input}
-              />
-            </div>
-          ))}
-
-          <button
-            onClick={addItem}
-            className="no-print"
-            style={styles.button}
-          >
-            + Add Item
-          </button>
-
-          {/* TOTAL */}
-          <div style={styles.summary}>
-            <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
-            <p>GST (18%): ₹{gst.toFixed(2)}</p>
-            <h2>Total: ₹{total.toFixed(2)}</h2>
-          </div>
-        </div>
-
-        <button
-          onClick={generatePDF}
-          className="no-print"
-          style={styles.downloadBtn}
-        >
-          Print / Save as PDF
-        </button>
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -137,8 +143,6 @@ const styles = {
   container: {
     padding: 20,
     fontFamily: "Arial",
-    backgroundColor: "#f5f5f5",
-    minHeight: "100vh",
   },
 
   title: {
@@ -146,26 +150,8 @@ const styles = {
     marginBottom: 20,
   },
 
-  invoiceBox: {
-    width: "800px",
-    minHeight: "1100px",
-    padding: "30px",
-    backgroundColor: "#ffffff",
-    color: "#000000",
-    margin: "0 auto",
-    boxSizing: "border-box",
-    border: "1px solid #ddd",
-  },
-
-  heading: {
-    marginBottom: 20,
-  },
-
-  rowHeader: {
-    display: "flex",
-    borderBottom: "2px solid #000",
-    paddingBottom: 10,
-    marginBottom: 10,
+  editorBox: {
+    marginBottom: 30,
   },
 
   row: {
@@ -174,58 +160,53 @@ const styles = {
     marginBottom: 10,
   },
 
-  cell: {
-    flex: 1,
-    fontWeight: "bold",
-  },
-
   input: {
     flex: 2,
-    minWidth: "120px",
-    padding: "12px",
-    fontSize: "16px",
+    padding: 12,
+    fontSize: 16,
     border: "1px solid #aaa",
     borderRadius: 6,
-    backgroundColor: "#fff",
-    color: "#000",
-    boxSizing: "border-box",
   },
 
   inputSmall: {
     flex: 1,
-    minWidth: "80px",
-    padding: "12px",
-    fontSize: "16px",
+    padding: 12,
+    fontSize: 16,
     border: "1px solid #aaa",
     borderRadius: 6,
-    backgroundColor: "#fff",
-    color: "#000",
-    boxSizing: "border-box",
   },
 
   button: {
-    marginTop: 10,
     padding: "10px 15px",
+    marginRight: 10,
     background: "#333",
     color: "#fff",
     border: "none",
-    cursor: "pointer",
+  },
+
+  printBtn: {
+    padding: "10px 15px",
+    background: "green",
+    color: "#fff",
+    border: "none",
+  },
+
+  printBox: {
+    width: "100%",
+    maxWidth: "800px",
+    margin: "0 auto",
+    padding: "20px",
+    border: "1px solid #ddd",
+  },
+
+  table: {
+    width: "100%",
+    borderCollapse: "collapse",
   },
 
   summary: {
     marginTop: 20,
     borderTop: "1px solid #ddd",
     paddingTop: 10,
-  },
-
-  downloadBtn: {
-    marginTop: 20,
-    padding: "12px 20px",
-    background: "green",
-    color: "#fff",
-    border: "none",
-    cursor: "pointer",
-    display: "block",
-    margin: "20px auto",
   },
 };
