@@ -8,6 +8,9 @@ export default function App() {
 
   const GST = 18;
 
+  const GST_NUMBER = "123456";
+  const PHONE_NUMBER = "+919212155169";
+
   const emptyInvoice = {
     date: new Date().toISOString().split("T")[0],
     invoiceNo: Date.now(),
@@ -39,7 +42,6 @@ export default function App() {
 
   const saveBill = () => {
     const newBill = { ...invoice, subtotal, gstAmount, total };
-
     setHistory([newBill, ...history]);
 
     setInvoice({
@@ -84,79 +86,104 @@ export default function App() {
         <button onClick={saveBill}>Save Bill</button>
       </div>
 
+      {/* INVOICE */}
       <div
         id="invoice"
         style={{
           background: "white",
-          padding: 30,
+          padding: 60,
           width: "850px",
+          minHeight: "1120px",
           border: "2px solid black",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
         }}
       >
-        <h1 style={{ textAlign: "center", fontSize: 34, color: "red" }}>
-          SHIVSHAKTI ACID & CHEMICALS
-        </h1>
+        {/* TOP */}
+        <div>
+          <h1 style={{ textAlign: "center", fontSize: 36, color: "red", marginBottom: 5 }}>
+            SHIVSHAKTI ACID & CHEMICALS
+          </h1>
 
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <p><b>Date:</b> {invoice.date}</p>
-          <p><b>Invoice No:</b> {invoice.invoiceNo}</p>
-        </div>
-
-        <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
-          <div>
-            <b>Customer:</b><br />
-            <select name="customer" value={invoice.customer} onChange={handleChange}>
-              {customers.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
+          <div style={{ textAlign: "center", marginBottom: 15 }}>
+            <p style={{ margin: 2 }}><b>GST NO:</b> {GST_NUMBER}</p>
+            <p style={{ margin: 2 }}><b>Contact:</b> {PHONE_NUMBER}</p>
           </div>
 
-          <div>
-            <b>Material:</b><br />
-            <select name="material" value={invoice.material} onChange={handleChange}>
-              {materials.map((m) => (
-                <option key={m}>{m}</option>
-              ))}
-            </select>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <p><b>Date:</b> {invoice.date}</p>
+            <p><b>Invoice No:</b> {invoice.invoiceNo}</p>
+          </div>
+
+          <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
+            <div>
+              <b>Customer:</b><br />
+              <select name="customer" value={invoice.customer} onChange={handleChange}>
+                {customers.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <b>Material:</b><br />
+              <select name="material" value={invoice.material} onChange={handleChange}>
+                {materials.map((m) => (
+                  <option key={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <table
+            style={{
+              width: "100%",
+              marginTop: 25,
+              borderCollapse: "collapse",
+              border: "2px solid black",
+            }}
+          >
+            <thead>
+              <tr>
+                <th style={{ border: "1px solid black", padding: 10 }}>Material</th>
+                <th style={{ border: "1px solid black", padding: 10 }}>Qty</th>
+                <th style={{ border: "1px solid black", padding: 10 }}>Rate</th>
+                <th style={{ border: "1px solid black", padding: 10 }}>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ border: "1px solid black", padding: 10 }}>{invoice.material}</td>
+                <td style={{ border: "1px solid black", padding: 10 }}>
+                  <input name="quantity" value={invoice.quantity} onChange={handleChange} />
+                </td>
+                <td style={{ border: "1px solid black", padding: 10 }}>
+                  <input name="rate" value={invoice.rate} onChange={handleChange} />
+                </td>
+                <td style={{ border: "1px solid black", padding: 10 }}>
+                  ₹ {total.toFixed(2)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style={{ marginTop: 20, textAlign: "right" }}>
+            <h3>Subtotal: ₹{subtotal.toFixed(2)}</h3>
+            <h3>GST: ₹{gstAmount.toFixed(2)}</h3>
+            <h2>TOTAL: ₹{total.toFixed(2)}</h2>
           </div>
         </div>
 
-        <table
-          style={{
-            width: "100%",
-            marginTop: 20,
-            borderCollapse: "collapse",
-            border: "2px solid black",
-          }}
-        >
-          <thead>
-            <tr>
-              <th style={th}>Material</th>
-              <th style={th}>Qty</th>
-              <th style={th}>Rate</th>
-              <th style={th}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={td}>{invoice.material}</td>
-              <td style={td}>
-                <input name="quantity" value={invoice.quantity} onChange={handleChange} />
-              </td>
-              <td style={td}>
-                <input name="rate" value={invoice.rate} onChange={handleChange} />
-              </td>
-              <td style={td}>₹ {total.toFixed(2)}</td>
-            </tr>
-          </tbody>
-        </table>
-
-        <h3 style={{ textAlign: "right" }}>Subtotal: ₹{subtotal.toFixed(2)}</h3>
-        <h3 style={{ textAlign: "right" }}>GST: ₹{gstAmount.toFixed(2)}</h3>
-        <h2 style={{ textAlign: "right" }}>TOTAL: ₹{total.toFixed(2)}</h2>
+        {/* FOOTER */}
+        <div style={{ marginTop: 60 }}>
+          <p>Regards,</p>
+          <p><b>Rajiv Sharma</b></p>
+          <p><b>Phone:</b> {PHONE_NUMBER}</p>
+        </div>
       </div>
 
+      {/* HISTORY */}
       <div style={{ marginTop: 40 }}>
         <h2>Saved Bills History (Click to Open)</h2>
         <table border="1" cellPadding="10" style={{ width: "100%" }}>
@@ -185,6 +212,3 @@ export default function App() {
     </div>
   );
 }
-
-const th = { border: "1px solid black", padding: 10 };
-const td = { border: "1px solid black", padding: 10, textAlign: "center" };
