@@ -1,263 +1,180 @@
-import { useEffect, useState } from "react";
-import jsPDF from "jspdf";
+import { useState } from "react";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 export default function App() {
-  const customers = ["Customer 1", "Customer 2", "Customer 3"];
-  const materials = ["Sulphuric Acid", "Hydrochloric Acid"];
+  const [items, setItems] = useState([
+    { name: "", qty: 1, price: 0 },
+  ]);
 
-  const GST = 18;
-
-  const GST_NUMBER = "123456";
-  const PHONE_NUMBER = "+919212155169";
-
-  const emptyInvoice = {
-    date: new Date().toISOString().split("T")[0],
-    invoiceNo: Date.now(),
-    customer: customers[0],
-    material: materials[0],
-    quantity: "",
-    rate: "",
+  const addItem = () => {
+    setItems([...items, { name: "", qty: 1, price: 0 }]);
   };
 
-  const [invoice, setInvoice] = useState(emptyInvoice);
-  const [history, setHistory] = useState([]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem("invoice_history");
-    if (saved) setHistory(JSON.parse(saved));
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem("invoice_history", JSON.stringify(history));
-  }, [history]);
-
-  const subtotal =
-    Number(invoice.quantity || 0) * Number(invoice.rate || 0);
-
-  const gstAmount = (subtotal * GST) / 100;
-  const total = subtotal + gstAmount;
-
-  const handleChange = (e) => {
-    setInvoice({ ...invoice, [e.target.name]: e.target.value });
+  const updateItem = (index, field, value) => {
+    const newItems = [...items];
+    newItems[index][field] = value;
+    setItems(newItems);
   };
 
-  const saveBill = () => {
-    const newBill = { ...invoice, subtotal, gstAmount, total };
-    setHistory([newBill, ...history]);
+  const subtotal = items.reduce(
+    (sum, item) => sum + item.qty * item.price,
+    0
+  );
 
-    setInvoice({
-      ...emptyInvoice,
-      invoiceNo: Date.now(),
-    });
-  };
-
-  const openPastBill = (bill) => {
-    setInvoice({
-      date: bill.date,
-      invoiceNo: bill.invoiceNo,
-      customer: bill.customer,
-      material: bill.material,
-      quantity: bill.quantity,
-      rate: bill.rate,
-    });
-  };
+  const gst = subtotal * 0.18;
+  const total = subtotal + gst;
 
   const generatePDF = () => {
     const input = document.getElementById("invoice");
 
     html2canvas(input, {
-      scale: 2,
+      scale: 3, // 🔥 FIX: prevents blurry/cut numbers
       useCORS: true,
     }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
+
       const pdf = new jsPDF("p", "mm", "a4");
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-      pdf.save(`Invoice-${invoice.invoiceNo}.pdf`);
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("invoice.pdf");
     });
   };
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <div style={{ marginBottom: 20 }}>
-        <button onClick={generatePDF} style={{ marginRight: 10 }}>
-          Download PDF
+    <div style={styles.container}>
+      <h1 style={styles.title}>Invoice Generator</h1>
+
+      {/* INVOICE BOX */}
+      <div id="invoice" style={styles.invoiceBox}>
+        <h2>Shiv Shakti Invoice</h2>
+
+        {/* ITEMS */}
+        {items.map((item, index) => (
+          <div key={index} style={styles.row}>
+            
+            <input
+              placeholder="Item Name"
+              value={item.name}
+              onChange={(e) =>
+                updateItem(index, "name", e.target.value)
+              }
+              style={styles.bigInput}
+            />
+
+            <input
+              type="number"
+              placeholder="Qty"
+              value={item.qty}
+              onChange={(e) =>
+                updateItem(index, "qty", Number(e.target.value))
+              }
+              style={styles.smallInput}
+            />
+
+            <input
+              type="number"
+              placeholder="Price"
+              value={item.price}
+              onChange={(e) =>
+                updateItem(index, "price", Number(e.target.value))
+              }
+              style={styles.bigInput}
+            />
+          </div>
+        ))}
+
+        <button onClick={addItem} style={styles.button}>
+          + Add Item
         </button>
-        <button onClick={saveBill}>Save Bill</button>
-      </div>
 
-      {/* INVOICE */}
-      <div
-        id="invoice"
-        style={{
-          background: "white",
-          padding: 50,
-          width: "850px",
-          minHeight: "1120px",
-          border: "2px solid black",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
-        {/* HEADER */}
-        <div>
-          <h1
-            style={{
-              textAlign: "center",
-              fontSize: 38,
-              color: "red",
-              marginBottom: 5,
-            }}
-          >
-            SHIVSHAKTI ACID & CHEMICALS
-          </h1>
-
-          <div style={{ textAlign: "center" }}>
-            <p><b>GST NO:</b> {GST_NUMBER}</p>
-            <p><b>Contact:</b> {PHONE_NUMBER}</p>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <p><b>Date:</b> {invoice.date}</p>
-            <p><b>Invoice No:</b> {invoice.invoiceNo}</p>
-          </div>
-
-          {/* INPUTS (NOT FOR PDF TEXT ONLY CONTROL) */}
-          <div style={{ display: "flex", gap: 20, marginTop: 10 }}>
-            <div>
-              <b>Customer</b><br />
-              <select
-                name="customer"
-                value={invoice.customer}
-                onChange={handleChange}
-              >
-                {customers.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <b>Material</b><br />
-              <select
-                name="material"
-                value={invoice.material}
-                onChange={handleChange}
-              >
-                {materials.map((m) => (
-                  <option key={m}>{m}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* TABLE */}
-          <table
-            style={{
-              width: "100%",
-              marginTop: 25,
-              borderCollapse: "collapse",
-              border: "2px solid black",
-            }}
-          >
-            <thead>
-              <tr>
-                <th style={th}>Material</th>
-                <th style={th}>Qty</th>
-                <th style={th}>Rate</th>
-                <th style={th}>Total</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              <tr>
-                <td style={td}>{invoice.material}</td>
-
-                <td style={td}>
-                  <input
-                    name="quantity"
-                    value={invoice.quantity}
-                    onChange={handleChange}
-                  />
-                </td>
-
-                <td style={td}>
-                  <input
-                    name="rate"
-                    value={invoice.rate}
-                    onChange={handleChange}
-                  />
-                </td>
-
-                {/* CLEAN DISPLAY (IMPORTANT FIX FOR PDF) */}
-                <td style={td}>₹ {total.toFixed(2)}</td>
-              </tr>
-            </tbody>
-          </table>
-
-          <div style={{ textAlign: "right", marginTop: 20 }}>
-            <h3>Subtotal: ₹{subtotal.toFixed(2)}</h3>
-            <h3>GST (18%): ₹{gstAmount.toFixed(2)}</h3>
-            <h2>TOTAL: ₹{total.toFixed(2)}</h2>
-          </div>
-        </div>
-
-        {/* FOOTER */}
-        <div style={{ marginTop: 60 }}>
-          <p>Regards,</p>
-          <p><b>Rajiv Sharma</b></p>
-          <p><b>Phone:</b> {PHONE_NUMBER}</p>
+        {/* TOTALS */}
+        <div style={styles.summary}>
+          <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
+          <p>GST (18%): ₹{gst.toFixed(2)}</p>
+          <h3>Total: ₹{total.toFixed(2)}</h3>
         </div>
       </div>
 
-      {/* HISTORY */}
-      <div style={{ marginTop: 40 }}>
-        <h2>Saved Bills</h2>
-
-        <table border="1" cellPadding="10" style={{ width: "100%" }}>
-          <thead>
-            <tr>
-              <th>Invoice</th>
-              <th>Date</th>
-              <th>Customer</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {history.map((h, i) => (
-              <tr
-                key={i}
-                onClick={() => openPastBill(h)}
-                style={{ cursor: "pointer" }}
-              >
-                <td>{h.invoiceNo}</td>
-                <td>{h.date}</td>
-                <td>{h.customer}</td>
-                <td>₹ {h.total.toFixed(2)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <button onClick={generatePDF} style={styles.downloadBtn}>
+        Download PDF
+      </button>
     </div>
   );
 }
 
-/* STYLES */
-const th = {
-  border: "1px solid black",
-  padding: 10,
-  background: "#f2f2f2",
-};
+/* ---------------- STYLES ---------------- */
 
-const td = {
-  border: "1px solid black",
-  padding: 10,
-  textAlign: "center",
+const styles = {
+  container: {
+    padding: 20,
+    fontFamily: "Arial",
+  },
+
+  title: {
+    textAlign: "center",
+    marginBottom: 20,
+  },
+
+  invoiceBox: {
+    width: "210mm", // 🔥 A4 FIX
+    minHeight: "297mm",
+    padding: "15mm",
+    background: "white",
+    border: "1px solid #ccc",
+    margin: "0 auto",
+    boxSizing: "border-box",
+  },
+
+  row: {
+    display: "flex",
+    gap: 10,
+    marginBottom: 12,
+  },
+
+  bigInput: {
+    flex: 2,
+    padding: "12px",        // 🔥 BIG BOX FIX
+    fontSize: "16px",       // 🔥 prevents cut text
+    border: "1px solid #aaa",
+    borderRadius: 6,
+  },
+
+  smallInput: {
+    flex: 1,
+    padding: "12px",
+    fontSize: "16px",
+    border: "1px solid #aaa",
+    borderRadius: 6,
+  },
+
+  button: {
+    marginTop: 10,
+    padding: "10px 15px",
+    background: "#333",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+  },
+
+  downloadBtn: {
+    marginTop: 20,
+    padding: "12px 20px",
+    background: "green",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+    display: "block",
+    marginLeft: "auto",
+    marginRight: "auto",
+  },
+
+  summary: {
+    marginTop: 20,
+    borderTop: "1px solid #ddd",
+    paddingTop: 10,
+  },
 };
