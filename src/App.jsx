@@ -28,30 +28,11 @@ export default function App() {
   const generatePDF = () => {
     const input = document.getElementById("invoice");
 
-    // 🔥 FIX: disable input rendering issues on iOS
-    const clone = input.cloneNode(true);
-
-    clone.querySelectorAll("input").forEach((inputEl) => {
-      const div = document.createElement("div");
-      div.style.padding = "12px";
-      div.style.border = "1px solid #ddd";
-      div.style.minWidth = "80px";
-      div.style.fontSize = "16px";
-      div.style.background = "#fff";
-      div.style.color = "#000";
-      div.innerText = inputEl.value || " ";
-      inputEl.replaceWith(div);
-    });
-
-    document.body.appendChild(clone);
-    clone.style.position = "absolute";
-    clone.style.left = "-9999px";
-    clone.style.background = "#fff";
-
-    html2canvas(clone, {
+    html2canvas(input, {
       scale: 2,
-      backgroundColor: "#ffffff",
       useCORS: true,
+      backgroundColor: "#ffffff",
+      windowWidth: 800, // 🔥 FIX: prevents iPhone clipping
     }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
 
@@ -62,8 +43,6 @@ export default function App() {
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save("invoice.pdf");
-
-      document.body.removeChild(clone);
     });
   };
 
@@ -71,9 +50,18 @@ export default function App() {
     <div style={styles.container}>
       <h1 style={styles.title}>Invoice Generator</h1>
 
+      {/* INVOICE */}
       <div id="invoice" style={styles.invoiceBox}>
-        <h2>Shiv Shakti Invoice</h2>
+        <h2 style={styles.heading}>Shiv Shakti Invoice</h2>
 
+        {/* TABLE HEADER */}
+        <div style={styles.rowHeader}>
+          <div style={styles.cell}>Item</div>
+          <div style={styles.cell}>Qty</div>
+          <div style={styles.cell}>Price</div>
+        </div>
+
+        {/* ITEMS */}
         {items.map((item, index) => (
           <div key={index} style={styles.row}>
             <input
@@ -82,27 +70,25 @@ export default function App() {
               onChange={(e) =>
                 updateItem(index, "name", e.target.value)
               }
-              style={styles.input}
+              style={styles.inputLarge}
             />
 
             <input
               type="number"
-              placeholder="Qty"
               value={item.qty}
               onChange={(e) =>
                 updateItem(index, "qty", Number(e.target.value))
               }
-              style={styles.input}
+              style={styles.inputSmall}
             />
 
             <input
               type="number"
-              placeholder="Price"
               value={item.price}
               onChange={(e) =>
                 updateItem(index, "price", Number(e.target.value))
               }
-              style={styles.input}
+              style={styles.inputLarge}
             />
           </div>
         ))}
@@ -111,10 +97,11 @@ export default function App() {
           + Add Item
         </button>
 
+        {/* TOTAL */}
         <div style={styles.summary}>
           <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
           <p>GST (18%): ₹{gst.toFixed(2)}</p>
-          <h3>Total: ₹{total.toFixed(2)}</h3>
+          <h2>Total: ₹{total.toFixed(2)}</h2>
         </div>
       </div>
 
@@ -125,10 +112,13 @@ export default function App() {
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = {
   container: {
     padding: 20,
     fontFamily: "Arial",
+    backgroundColor: "#f5f5f5",
   },
 
   title: {
@@ -137,29 +127,59 @@ const styles = {
   },
 
   invoiceBox: {
-    width: "210mm",
-    minHeight: "297mm",
-    padding: "15mm",
+    width: "800px", // 🔥 FIX: stable PDF width
+    minHeight: "1100px",
+    padding: "40px",
     backgroundColor: "#fff",
     color: "#000",
     margin: "0 auto",
     boxSizing: "border-box",
   },
 
+  heading: {
+    marginBottom: 20,
+  },
+
+  rowHeader: {
+    display: "flex",
+    borderBottom: "2px solid #000",
+    paddingBottom: 10,
+    marginBottom: 10,
+  },
+
   row: {
     display: "flex",
     gap: 10,
-    marginBottom: 12,
+    marginBottom: 10,
   },
 
-  input: {
+  cell: {
     flex: 1,
-    padding: 12,
-    fontSize: 16,
+    fontWeight: "bold",
+  },
+
+  inputLarge: {
+    flex: 2,
+    minWidth: "150px", // 🔥 prevents cutoff
+    padding: "12px",
+    fontSize: "16px",
     border: "1px solid #aaa",
     borderRadius: 6,
     backgroundColor: "#fff",
     color: "#000",
+    boxSizing: "border-box",
+  },
+
+  inputSmall: {
+    flex: 1,
+    minWidth: "80px",
+    padding: "12px",
+    fontSize: "16px",
+    border: "1px solid #aaa",
+    borderRadius: 6,
+    backgroundColor: "#fff",
+    color: "#000",
+    boxSizing: "border-box",
   },
 
   button: {
@@ -170,6 +190,13 @@ const styles = {
     border: "none",
   },
 
+  summary: {
+    marginTop: 20,
+    borderTop: "1px solid #ddd",
+    paddingTop: 10,
+    color: "#000",
+  },
+
   downloadBtn: {
     marginTop: 20,
     padding: "12px 20px",
@@ -178,11 +205,5 @@ const styles = {
     border: "none",
     display: "block",
     margin: "20px auto",
-  },
-
-  summary: {
-    marginTop: 20,
-    borderTop: "1px solid #ddd",
-    paddingTop: 10,
   },
 };
