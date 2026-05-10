@@ -28,11 +28,30 @@ export default function App() {
   const generatePDF = () => {
     const input = document.getElementById("invoice");
 
-    html2canvas(input, {
-      scale: 2, // 🔥 iPhone-safe (DO NOT use 3)
-      useCORS: true,
+    // 🔥 FIX: disable input rendering issues on iOS
+    const clone = input.cloneNode(true);
+
+    clone.querySelectorAll("input").forEach((inputEl) => {
+      const div = document.createElement("div");
+      div.style.padding = "12px";
+      div.style.border = "1px solid #ddd";
+      div.style.minWidth = "80px";
+      div.style.fontSize = "16px";
+      div.style.background = "#fff";
+      div.style.color = "#000";
+      div.innerText = inputEl.value || " ";
+      inputEl.replaceWith(div);
+    });
+
+    document.body.appendChild(clone);
+    clone.style.position = "absolute";
+    clone.style.left = "-9999px";
+    clone.style.background = "#fff";
+
+    html2canvas(clone, {
+      scale: 2,
       backgroundColor: "#ffffff",
-      windowWidth: document.documentElement.offsetWidth,
+      useCORS: true,
     }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
 
@@ -43,6 +62,8 @@ export default function App() {
 
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save("invoice.pdf");
+
+      document.body.removeChild(clone);
     });
   };
 
@@ -50,9 +71,8 @@ export default function App() {
     <div style={styles.container}>
       <h1 style={styles.title}>Invoice Generator</h1>
 
-      {/* INVOICE */}
       <div id="invoice" style={styles.invoiceBox}>
-        <h2 style={{ color: "#000" }}>Shiv Shakti Invoice</h2>
+        <h2>Shiv Shakti Invoice</h2>
 
         {items.map((item, index) => (
           <div key={index} style={styles.row}>
@@ -62,7 +82,7 @@ export default function App() {
               onChange={(e) =>
                 updateItem(index, "name", e.target.value)
               }
-              style={styles.bigInput}
+              style={styles.input}
             />
 
             <input
@@ -72,7 +92,7 @@ export default function App() {
               onChange={(e) =>
                 updateItem(index, "qty", Number(e.target.value))
               }
-              style={styles.smallInput}
+              style={styles.input}
             />
 
             <input
@@ -82,7 +102,7 @@ export default function App() {
               onChange={(e) =>
                 updateItem(index, "price", Number(e.target.value))
               }
-              style={styles.bigInput}
+              style={styles.input}
             />
           </div>
         ))}
@@ -91,7 +111,6 @@ export default function App() {
           + Add Item
         </button>
 
-        {/* SUMMARY */}
         <div style={styles.summary}>
           <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
           <p>GST (18%): ₹{gst.toFixed(2)}</p>
@@ -106,14 +125,10 @@ export default function App() {
   );
 }
 
-/* ================= STYLES ================= */
-
 const styles = {
   container: {
     padding: 20,
     fontFamily: "Arial",
-    backgroundColor: "#f5f5f5",
-    minHeight: "100vh",
   },
 
   title: {
@@ -125,9 +140,8 @@ const styles = {
     width: "210mm",
     minHeight: "297mm",
     padding: "15mm",
-    backgroundColor: "#ffffff", // 🔥 FIX iPhone black issue
-    color: "#000000",          // 🔥 FIX invisible text
-    border: "1px solid #ccc",
+    backgroundColor: "#fff",
+    color: "#000",
     margin: "0 auto",
     boxSizing: "border-box",
   },
@@ -138,28 +152,14 @@ const styles = {
     marginBottom: 12,
   },
 
-  bigInput: {
-    flex: 2,
-    padding: "14px",
-    fontSize: "16px",
-    border: "1px solid #aaa",
-    borderRadius: 6,
-    backgroundColor: "#ffffff",
-    color: "#000000",
-    WebkitAppearance: "none",
-    appearance: "none",
-  },
-
-  smallInput: {
+  input: {
     flex: 1,
-    padding: "14px",
-    fontSize: "16px",
+    padding: 12,
+    fontSize: 16,
     border: "1px solid #aaa",
     borderRadius: 6,
-    backgroundColor: "#ffffff",
-    color: "#000000",
-    WebkitAppearance: "none",
-    appearance: "none",
+    backgroundColor: "#fff",
+    color: "#000",
   },
 
   button: {
@@ -168,7 +168,6 @@ const styles = {
     background: "#333",
     color: "#fff",
     border: "none",
-    cursor: "pointer",
   },
 
   downloadBtn: {
@@ -177,16 +176,13 @@ const styles = {
     background: "green",
     color: "#fff",
     border: "none",
-    cursor: "pointer",
     display: "block",
-    marginLeft: "auto",
-    marginRight: "auto",
+    margin: "20px auto",
   },
 
   summary: {
     marginTop: 20,
     borderTop: "1px solid #ddd",
     paddingTop: 10,
-    color: "#000000", // 🔥 FIX total visibility issue
   },
 };
