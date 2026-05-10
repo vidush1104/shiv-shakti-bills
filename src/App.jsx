@@ -29,8 +29,10 @@ export default function App() {
     const input = document.getElementById("invoice");
 
     html2canvas(input, {
-      scale: 3, // 🔥 FIX: prevents blurry/cut numbers
+      scale: 2, // 🔥 iPhone-safe (DO NOT use 3)
       useCORS: true,
+      backgroundColor: "#ffffff",
+      windowWidth: document.documentElement.offsetWidth,
     }).then((canvas) => {
       const imgData = canvas.toDataURL("image/png");
 
@@ -48,14 +50,12 @@ export default function App() {
     <div style={styles.container}>
       <h1 style={styles.title}>Invoice Generator</h1>
 
-      {/* INVOICE BOX */}
+      {/* INVOICE */}
       <div id="invoice" style={styles.invoiceBox}>
-        <h2>Shiv Shakti Invoice</h2>
+        <h2 style={{ color: "#000" }}>Shiv Shakti Invoice</h2>
 
-        {/* ITEMS */}
         {items.map((item, index) => (
           <div key={index} style={styles.row}>
-            
             <input
               placeholder="Item Name"
               value={item.name}
@@ -91,7 +91,7 @@ export default function App() {
           + Add Item
         </button>
 
-        {/* TOTALS */}
+        {/* SUMMARY */}
         <div style={styles.summary}>
           <p>Subtotal: ₹{subtotal.toFixed(2)}</p>
           <p>GST (18%): ₹{gst.toFixed(2)}</p>
@@ -106,12 +106,14 @@ export default function App() {
   );
 }
 
-/* ---------------- STYLES ---------------- */
+/* ================= STYLES ================= */
 
 const styles = {
   container: {
     padding: 20,
     fontFamily: "Arial",
+    backgroundColor: "#f5f5f5",
+    minHeight: "100vh",
   },
 
   title: {
@@ -120,10 +122,11 @@ const styles = {
   },
 
   invoiceBox: {
-    width: "210mm", // 🔥 A4 FIX
+    width: "210mm",
     minHeight: "297mm",
     padding: "15mm",
-    background: "white",
+    backgroundColor: "#ffffff", // 🔥 FIX iPhone black issue
+    color: "#000000",          // 🔥 FIX invisible text
     border: "1px solid #ccc",
     margin: "0 auto",
     boxSizing: "border-box",
@@ -137,25 +140,33 @@ const styles = {
 
   bigInput: {
     flex: 2,
-    padding: "12px",        // 🔥 BIG BOX FIX
-    fontSize: "16px",       // 🔥 prevents cut text
+    padding: "14px",
+    fontSize: "16px",
     border: "1px solid #aaa",
     borderRadius: 6,
+    backgroundColor: "#ffffff",
+    color: "#000000",
+    WebkitAppearance: "none",
+    appearance: "none",
   },
 
   smallInput: {
     flex: 1,
-    padding: "12px",
+    padding: "14px",
     fontSize: "16px",
     border: "1px solid #aaa",
     borderRadius: 6,
+    backgroundColor: "#ffffff",
+    color: "#000000",
+    WebkitAppearance: "none",
+    appearance: "none",
   },
 
   button: {
     marginTop: 10,
     padding: "10px 15px",
     background: "#333",
-    color: "white",
+    color: "#fff",
     border: "none",
     cursor: "pointer",
   },
@@ -164,7 +175,7 @@ const styles = {
     marginTop: 20,
     padding: "12px 20px",
     background: "green",
-    color: "white",
+    color: "#fff",
     border: "none",
     cursor: "pointer",
     display: "block",
@@ -176,5 +187,6 @@ const styles = {
     marginTop: 20,
     borderTop: "1px solid #ddd",
     paddingTop: 10,
+    color: "#000000", // 🔥 FIX total visibility issue
   },
 };
